@@ -190,6 +190,9 @@ public abstract class BaseBuilder extends Builder implements SimpleBuildStep {
                 output = Util.executePost(String.format(Constants.REST_GET_IOT_KEY_URL, servicePrincipal.getSubscriptionId(), Util.encodeURIComponent(resourceGroup), Util.encodeURIComponent(iothubName)),
                         "",
                         "Bearer " + accessToken, "application/json");
+                if (output == null) {
+                    return model;
+                }
                 String key = "";
                 JSONArray keys = new JSONObject(output).getJSONArray("value");
                 for (int i = 0; i < keys.length(); i++) {
