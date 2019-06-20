@@ -55,6 +55,17 @@ import java.util.Map;
 
 public class EdgeDeployBuilder extends BaseBuilder {
 
+    public String getDeploymentFilePath() {
+        return deploymentFilePath;
+    }
+
+    @DataBoundSetter
+    public void setDeploymentFilePath(String deploymentFilePath) {
+        this.deploymentFilePath = deploymentFilePath;
+    }
+
+    private String deploymentFilePath;
+
     public String getIothubName() {
         return iothubName;
     }
@@ -135,12 +146,10 @@ public class EdgeDeployBuilder extends BaseBuilder {
             justification="Don't need use the result from delete file")
     public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
         try {
-            // Get deployment.json using iotedgedev
-            ShellExecuter executer = new ShellExecuter(run, launcher, listener, new File(workspace.getRemote(), getRootPath()));
-            writeEnvFile(Paths.get(workspace.getRemote(), getRootPath(), Constants.IOTEDGEDEV_ENV_FILENAME).toString(), "", "");
-            executer.executeAZ("iotedgedev genconfig", true);
-
-            String deploymentJsonPath = Paths.get(workspace.getRemote(), getRootPath(), "config", Constants.EDGE_DEPLOYMENT_CONFIG_FILENAME).toString();
+            // Generate .env file for iotedgedev use
+            writeEnvFile(Paths.get(workspace.getRemote(), Constants.IOTEDGEDEV_ENV_FILENAME).toString(), "", "", "", "");
+            
+            String deploymentJsonPath = Paths.get(workspace.getRemote(), deploymentFilePath).toString();
 
             // Modify deployment.json structure
             InputStream stream = new FileInputStream(deploymentJsonPath);
@@ -150,7 +159,7 @@ public class EdgeDeployBuilder extends BaseBuilder {
             // Get docker credential from temp file
             ObjectMapper mapper = new ObjectMapper();
             Map<String, DockerCredential> credentialMap = new HashMap<>();
-            File credentialFile = new File(Paths.get(workspace.getRemote(), getRootPath(), Constants.DOCKER_CREDENTIAL_FILENAME).toString());
+            File credentialFile = new File(Paths.get(workspace.getRemote(), Constants.DOCKER_CREDENTIAL_FILENAME).toString());
             if (credentialFile.exists() && !credentialFile.isDirectory()) {
                 credentialMap = mapper.readValue(credentialFile, new TypeReference<Map<String, DockerCredential>>() {
                 });
@@ -176,31 +185,33 @@ public class EdgeDeployBuilder extends BaseBuilder {
                 if (settings.has("registryCredentials")) {
                     JSONObject registryCredentials = settings.getJSONObject("registryCredentials");
                     JSONArray keys = registryCredentials.names();
-                    List<DockerCredential> credentialList = new ArrayList<>(credentialMap.values());
-                    int index = 0;
-                    for (int i = 0; i < keys.length(); i++) {
-                        JSONObject credentialObject = registryCredentials.getJSONObject(keys.getString(i));
-                        if (credentialObject.has("username") && credentialObject.getString("username").startsWith("$") && index < credentialList.size()) {
-                            DockerCredential cred = credentialList.get(index++);
-                            String url = "", username = "", password = "";
-                            if (cred.isAcr) {
-                                final Azure azureClient = AzureUtils.buildClient(run.getParent(), cred.credentialId);
-                                Registries rs = azureClient.containerRegistries();
-                                Registry r = rs.getByResourceGroup(getResourceGroup(), cred.url);
-                                RegistryCredentials rc = r.getCredentials();
-                                username = rc.username();
-                                url = r.loginServerUrl();
-                                password = rc.accessKeys().get(AccessKeyType.PRIMARY);
-                            } else {
-                                StandardUsernamePasswordCredentials credential = CredentialsProvider.findCredentialById(cred.credentialId, StandardUsernamePasswordCredentials.class, run);
-                                if (credential != null) {
-                                    username = credential.getUsername();
-                                    password = credential.getPassword().getPlainText();
-                                    url = cred.url;
+                    if (keys != null) {
+                        List<DockerCredential> credentialList = new ArrayList<>(credentialMap.values());
+                        int index = 0;
+                        for (int i = 0; i < keys.length(); i++) {
+                            JSONObject credentialObject = registryCredentials.getJSONObject(keys.getString(i));
+                            if (credentialObject.has("username") && credentialObject.getString("username").startsWith("$") && index < credentialList.size()) {
+                                DockerCredential cred = credentialList.get(index++);
+                                String url = "", username = "", password = "";
+                                if (cred.isAcr) {
+                                    final Azure azureClient = AzureUtils.buildClient(run.getParent(), cred.credentialId);
+                                    Registries rs = azureClient.containerRegistries();
+                                    Registry r = rs.getByResourceGroup(getResourceGroup(), cred.url);
+                                    RegistryCredentials rc = r.getCredentials();
+                                    username = rc.username();
+                                    url = r.loginServerUrl();
+                                    password = rc.accessKeys().get(AccessKeyType.PRIMARY);
+                                } else {
+                                    StandardUsernamePasswordCredentials credential = CredentialsProvider.findCredentialById(cred.credentialId, StandardUsernamePasswordCredentials.class, run);
+                                    if (credential != null) {
+                                        username = credential.getUsername();
+                                        password = credential.getPassword().getPlainText();
+                                        url = cred.url;
+                                    }
                                 }
+                                JSONObject updatedCredential = new JSONObject("{'username':'" + username + "','password':'" + password + "','address':'" + url + "'}");
+                                registryCredentials.put(keys.getString(i), updatedCredential);
                             }
-                            JSONObject updatedCredential = new JSONObject("{'username':'" + username + "','password':'" + password + "','address':'" + url + "'}");
-                            registryCredentials.put(keys.getString(i), updatedCredential);
                         }
                     }
                 }
@@ -221,7 +232,7 @@ public class EdgeDeployBuilder extends BaseBuilder {
             }
             AzureCredentials.ServicePrincipal servicePrincipal = AzureCredentials.getServicePrincipal(getAzureCredentialsId());
             AzureCredentialCache credentialCache = new AzureCredentialCache(servicePrincipal);
-            ShellExecuter azExecuter = new ShellExecuter(run, launcher, listener, new File(workspace.getRemote(), getRootPath()));
+            ShellExecuter azExecuter = new ShellExecuter(run, launcher, listener, new File(workspace.getRemote()));
             try {
                 azExecuter.login(credentialCache);
 
@@ -233,11 +244,11 @@ public class EdgeDeployBuilder extends BaseBuilder {
                 }
             }
 
-            String scriptToDeploy = "az iot edge deployment create --config-id " + deploymentId + " --hub-name " + iothubName + " --content " + deploymentJsonPath + " --target-condition \"" + condition + "\" --priority " + priority + "";
-            executer.executeAZ(scriptToDeploy, true);
+            String scriptToDeploy = "az iot edge deployment create --config-id " + deploymentId + " --hub-name " + iothubName + " --content \"" + deploymentJsonPath + "\" --target-condition \"" + condition + "\" --priority " + priority + "";
+            azExecuter.executeAZ(scriptToDeploy, true);
 
             // delete generated deployment.json
-            Files.deleteIfExists(Paths.get(workspace.getRemote(), getRootPath(), Constants.EDGE_DEPLOYMENT_CONFIG_FOLDERNAME, Constants.EDGE_DEPLOYMENT_CONFIG_FILENAME));
+            // Files.deleteIfExists(Paths.get(workspace.getRemote(), Constants.EDGE_DEPLOYMENT_CONFIG_FOLDERNAME, Constants.EDGE_DEPLOYMENT_CONFIG_FILENAME));
             AzureIoTEdgePlugin.sendEvent(run.getClass().getSimpleName(), Constants.TELEMETRY_VALUE_TASK_TYPE_DEPLOY, null, run.getFullDisplayName(), servicePrincipal.getSubscriptionId() , String.format(Constants.IOT_HUB_URL, iothubName));
         } catch (AzureCloudException | AzureCredentialsValidationException e) {
             AzureIoTEdgePlugin.sendEvent(run.getClass().getSimpleName(), Constants.TELEMETRY_VALUE_TASK_TYPE_DEPLOY, e.getMessage(), run.getFullDisplayName(), AzureCredentials.getServicePrincipal(getAzureCredentialsId()).getSubscriptionId(), String.format(Constants.IOT_HUB_URL, iothubName));

@@ -76,13 +76,20 @@ public abstract class BaseBuilder extends Builder implements SimpleBuildStep {
         this.rootPath = DescriptorImpl.defaultRootPath;
     }
 
-    protected void writeEnvFile(String path, String url, String bypassModules) {
+    protected BaseBuilder() {
+    }
+
+    protected void writeEnvFile(String path, String url, String bypassModules, String deploymentFileDir, String deploymentFileName) {
         PrintWriter writer = null;
         try {
             writer = new PrintWriter(path, Constants.CHARSET_UTF_8);
             writer.println(Env.EnvString);
             writer.println(Constants.IOTEDGEDEV_ENV_REGISTRY_SERVER + "=\"" + url + "\"");
             writer.println(Constants.IOTEDGEDEV_ENV_ACTIVE_MODULES + "=\"" + bypassModules + "\"");
+            writer.println(Constants.IOTEDGEDEV_CONFIG_OUTPUT_DIR + "=\"" + deploymentFileDir + "\"");
+            if (deploymentFileName != "") {
+                writer.println(Constants.IOTEDGEDEV_DEPLOYMENT_CONFIG_FILE + "=\"" + deploymentFileName + "\"");
+            }
             writer.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -99,6 +106,9 @@ public abstract class BaseBuilder extends Builder implements SimpleBuildStep {
     protected static class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public static final String defaultRootPath = "./";
         public static final String defaultModulesToBuild = "";
+        public static final String defaultDeploymentManifestFilePath = Constants.EDGE_DEPLOYMENT_MANIFEST_FILENAME;
+        public static final String defaultDeploymentFilePath = "config/deployment.json";
+        public static final String defaultDefaultPlatform = "amd64";
 
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;

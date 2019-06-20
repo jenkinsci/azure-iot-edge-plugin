@@ -1,0 +1,25 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Package",
+            "type": "shell",
+            "command": "mvn package -Dmaven.test.skip=true",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run",
+            "type": "shell",
+            "command": "mvn hpi:run -Djetty.port=8090",
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "mvn clean",
+            "problemMatcher": []
+        }
+    ]
+}

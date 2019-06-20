@@ -48,8 +48,8 @@ public final class Env {
             "# SOLUTION SETTINGS\n" +
             "#\n" +
             "\n" +
-            "CONFIG_OUTPUT_DIR=\"config\"\n" +
-            "DEPLOYMENT_CONFIG_FILE=\"deployment.json\" \n" +
+            "# CONFIG_OUTPUT_DIR=\"config\"\n" +
+            "# DEPLOYMENT_CONFIG_FILE=\"deployment.json\" \n" +
             "RUNTIME_CONFIG_FILE=\"runtime.json\" \n" +
             "LOGS_PATH=\"logs\"\n" +
             "MODULES_PATH=\"modules\"\n" +

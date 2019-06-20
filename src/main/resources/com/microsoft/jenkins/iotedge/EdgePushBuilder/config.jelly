@@ -1,18 +1,19 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
     <f:section title="${%Module_Configuration}">
-    <f:entry title="${%Root_Path}" field="rootPath">
-                <f:textbox default="${descriptor.defaultRootPath}"/>
-            </f:entry>
+        <f:entry title="${%Deployment_Manifest_File_Path}" field="deploymentManifestFilePath">
+            <f:textbox default="${descriptor.defaultDeploymentManifestFilePath}"/>
+        </f:entry>
+        <f:entry title="${%Default_Platform}" field="defaultPlatform">
+            <f:textbox default="${descriptor.defaultDefaultPlatform}"/>
+        </f:entry>
         <f:entry title="${%Module_File_Path}" field="bypassModules">
             <f:textbox default="${descriptor.defaultModulesToBuild}"/>
         </f:entry>
     </f:section>
 
     <f:section title="${%Docker_Configuration}">
-        <f:radioBlock name="dockerRegistryType" value="acr" inline="true" title="${%Docker_Registry_ACR}"
-                              checked="${ instance.getDockerRegistryType()==null || instance.getDockerRegistryType() == 'acr'}"
-                              >
+        <f:radioBlock name="dockerRegistryType" value="acr" inline="true" title="${%Docker_Registry_ACR}" checked="${ instance.getDockerRegistryType()==null || instance.getDockerRegistryType() == 'acr'}">
             <f:entry title="${%Azure_Credentials}" field="azureCredentialsId">
                 <c:select expressionAllowed="false" checkMethod="post"/>
             </f:entry>
@@ -24,9 +25,7 @@
             </f:entry>
         </f:radioBlock>
 
-        <f:radioBlock name="dockerRegistryType" value="common" inline="true" title="${%Docker_Registry_Common}"
-                                      checked="${ instance.getDockerRegistryType()==null || instance.getDockerRegistryType() == 'common'}"
-                                      >
+        <f:radioBlock name="dockerRegistryType" value="common" inline="true" title="${%Docker_Registry_Common}" checked="${ instance.getDockerRegistryType()==null || instance.getDockerRegistryType() == 'common'}">
             <f:entry field="dockerRegistryEndpoint">
                 <f:property propertyDescriptor="${descriptor.dockerRegistryEndpointDescriptor}"/>
             </f:entry>

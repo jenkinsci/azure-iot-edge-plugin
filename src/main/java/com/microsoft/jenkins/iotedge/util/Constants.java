@@ -44,6 +44,8 @@ public final class Constants {
     public static final String IOTEDGEDEV_ENV_REGISTRY_USERNAME = "CONTAINER_REGISTRY_USERNAME";
     public static final String IOTEDGEDEV_ENV_REGISTRY_PASSWORD = "CONTAINER_REGISTRY_PASSWORD";
     public static final String IOTEDGEDEV_ENV_ACTIVE_MODULES = "BYPASS_MODULES";
+    public static final String IOTEDGEDEV_CONFIG_OUTPUT_DIR = "CONFIG_OUTPUT_DIR";
+    public static final String IOTEDGEDEV_DEPLOYMENT_CONFIG_FILE = "DEPLOYMENT_CONFIG_FILE";
 
     public static final Map<String, String> iotedgedevEnvMap;
 
@@ -75,8 +77,9 @@ public final class Constants {
     public static final String TELEMETRY_KEY_IOTHUB_NAME = "hashIotHubName";
     public static final String TELEMETRY_KEY_ERROR_MESSAGE = "errorMessage";
 
-
-    public static final String TELEMETRY_VALUE_TASK_TYPE_PUSH = "Build and Push";
+    public static final String TELEMETRY_VALUE_TASK_TYPE_BUILD = "Build";
+    public static final String TELEMETRY_VALUE_TASK_TYPE_PUSH = "Push";
+    public static final String TELEMETRY_VALUE_TASK_TYPE_GEN_CONFIG = "GenConfig";
     public static final String TELEMETRY_VALUE_TASK_TYPE_DEPLOY = "Deploy";
 
     public static final int SAS_TOKEN_MINUTES = 5;

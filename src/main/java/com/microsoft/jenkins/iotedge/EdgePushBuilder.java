@@ -94,14 +94,29 @@ public class EdgePushBuilder extends BaseBuilder {
 
     private DockerRegistryEndpoint dockerRegistryEndpoint;
 
-    @DataBoundConstructor
-    public EdgePushBuilder(final String azureCredentialsId,
-                           final String resourceGroup,
-                           final String rootPath) {
-        super(azureCredentialsId, resourceGroup, rootPath);
-        this.dockerRegistryType = Constants.DOCKER_REGISTRY_TYPE_ACR;
+    public String getDeploymentManifestFilePath() {
+        return deploymentManifestFilePath;
     }
 
+    @DataBoundSetter
+    public void setDeploymentManifestFilePath(String deploymentManifestFilePath) {
+        this.deploymentManifestFilePath = deploymentManifestFilePath;
+    }
+
+    private String deploymentManifestFilePath;
+
+    public String getDefaultPlatform() {
+        return defaultPlatform;
+    }
+
+    @DataBoundSetter
+    public void setDefaultPlatform(String defaultPlatform) {
+        this.defaultPlatform = defaultPlatform;
+    }
+
+    private String defaultPlatform;
+
+    @DataBoundConstructor
     public EdgePushBuilder(final String azureCredentialsId,
                            final String resourceGroup) {
         super(azureCredentialsId, resourceGroup);
@@ -135,12 +150,12 @@ public class EdgePushBuilder extends BaseBuilder {
             }
 
             // Generate .env file for iotedgedev use
-            writeEnvFile(Paths.get(workspace.getRemote(), getRootPath(), Constants.IOTEDGEDEV_ENV_FILENAME).toString(), url, bypassModules);
+            writeEnvFile(Paths.get(workspace.getRemote(), Constants.IOTEDGEDEV_ENV_FILENAME).toString(), url, bypassModules, "", "");
 
             // Save docker credential id to a file
             ObjectMapper mapper = new ObjectMapper();
             Map<String, DockerCredential> credentialMap = new HashMap<>();
-            File credentialFile = new File(Paths.get(workspace.getRemote(), getRootPath(), Constants.DOCKER_CREDENTIAL_FILENAME).toString());
+            File credentialFile = new File(Paths.get(workspace.getRemote(), Constants.DOCKER_CREDENTIAL_FILENAME).toString());
             if (credentialFile.exists() && !credentialFile.isDirectory()) {
                 credentialMap = mapper.readValue(credentialFile, new TypeReference<Map<String, DockerCredential>>() {
                 });
@@ -149,14 +164,12 @@ public class EdgePushBuilder extends BaseBuilder {
             credentialMap.put(url, dockerCredential);
             mapper.writeValue(credentialFile, credentialMap);
 
-            ShellExecuter executer = new ShellExecuter(run, launcher, listener, new File(workspace.getRemote(), getRootPath()));
+            ShellExecuter executer = new ShellExecuter(run, launcher, listener, new File(workspace.getRemote()));
             Map<String, String> envs = new HashMap<>();
             envs.put(Constants.IOTEDGEDEV_ENV_REGISTRY_USERNAME, username);
             envs.put(Constants.IOTEDGEDEV_ENV_REGISTRY_PASSWORD, password);
-            executer.executeAZ("iotedgedev push", true, envs);
+            executer.executeAZ(String.format("iotedgedev push --no-build --file \"%s\" --platform %s", deploymentManifestFilePath, defaultPlatform), true, envs);
 
-            // delete generated deployment.json
-            Files.deleteIfExists(Paths.get(workspace.getRemote(), getRootPath(), Constants.EDGE_DEPLOYMENT_CONFIG_FOLDERNAME, Constants.EDGE_DEPLOYMENT_CONFIG_FILENAME));
             AzureIoTEdgePlugin.sendEvent(run.getClass().getSimpleName(), Constants.TELEMETRY_VALUE_TASK_TYPE_PUSH, null, run.getFullDisplayName(), null, null);
         } catch (AzureCloudException e) {
             AzureIoTEdgePlugin.sendEvent(run.getClass().getSimpleName(), Constants.TELEMETRY_VALUE_TASK_TYPE_PUSH, e.getMessage(), run.getFullDisplayName(), null, null);
@@ -210,7 +223,7 @@ public class EdgePushBuilder extends BaseBuilder {
 
         @Override
         public String getDisplayName() {
-            return "Azure IoT Edge Build and Push";
+            return "Azure IoT Edge Push";
         }
 
     }
