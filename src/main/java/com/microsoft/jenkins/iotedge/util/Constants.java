@@ -32,7 +32,6 @@ public final class Constants {
     public static final String DOCKER_REGISTRY_TYPE_ACR = "acr";
     public static final String DOCKER_REGISTRY_TYPE_COMMON = "common";
 
-    public static final String DOCKER_CREDENTIAL_FILENAME = ".dockercredential";
     public static final String EDGE_MODULES_FOLDERNAME = "modules";
     public static final String EDGE_DEPLOYMENT_MANIFEST_FILENAME = "deployment.template.json";
     public static final String EDGE_DEPLOYMENT_CONFIG_FOLDERNAME = "config";

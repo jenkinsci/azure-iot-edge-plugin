@@ -152,18 +152,6 @@ public class EdgePushBuilder extends BaseBuilder {
             // Generate .env file for iotedgedev use
             writeEnvFile(Paths.get(workspace.getRemote(), Constants.IOTEDGEDEV_ENV_FILENAME).toString(), url, bypassModules, "", "");
 
-            // Save docker credential id to a file
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, DockerCredential> credentialMap = new HashMap<>();
-            File credentialFile = new File(Paths.get(workspace.getRemote(), Constants.DOCKER_CREDENTIAL_FILENAME).toString());
-            if (credentialFile.exists() && !credentialFile.isDirectory()) {
-                credentialMap = mapper.readValue(credentialFile, new TypeReference<Map<String, DockerCredential>>() {
-                });
-            }
-            DockerCredential dockerCredential = new DockerCredential(credentialId, isAcr, isAcr ? acrName : url);
-            credentialMap.put(url, dockerCredential);
-            mapper.writeValue(credentialFile, credentialMap);
-
             ShellExecuter executer = new ShellExecuter(run, launcher, listener, new File(workspace.getRemote()));
             Map<String, String> envs = new HashMap<>();
             envs.put(Constants.IOTEDGEDEV_ENV_REGISTRY_USERNAME, username);
