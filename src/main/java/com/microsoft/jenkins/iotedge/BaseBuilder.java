@@ -7,6 +7,7 @@
 package com.microsoft.jenkins.iotedge;
 
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.google.common.base.Strings;
 import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.containerregistry.Registry;
 import com.microsoft.azure.management.resources.GenericResource;
@@ -87,7 +88,7 @@ public abstract class BaseBuilder extends Builder implements SimpleBuildStep {
             writer.println(Constants.IOTEDGEDEV_ENV_REGISTRY_SERVER + "=\"" + url + "\"");
             writer.println(Constants.IOTEDGEDEV_ENV_ACTIVE_MODULES + "=\"" + bypassModules + "\"");
             writer.println(Constants.IOTEDGEDEV_CONFIG_OUTPUT_DIR + "=\"" + deploymentFileDir + "\"");
-            if (deploymentFileName != "") {
+            if (!Strings.isNullOrEmpty(deploymentFileName)) {
                 writer.println(Constants.IOTEDGEDEV_DEPLOYMENT_CONFIG_FILE + "=\"" + deploymentFileName + "\"");
             }
             writer.close();

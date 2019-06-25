@@ -19,7 +19,6 @@ import com.microsoft.azure.util.AzureCredentials;
 import com.microsoft.jenkins.iotedge.model.AzureCloudException;
 import com.microsoft.jenkins.iotedge.model.AzureCredentialCache;
 import com.microsoft.jenkins.iotedge.model.AzureCredentialsValidationException;
-import com.microsoft.jenkins.iotedge.model.DockerCredential;
 import com.microsoft.jenkins.iotedge.util.AzureUtils;
 import com.microsoft.jenkins.iotedge.util.Constants;
 import com.microsoft.jenkins.iotedge.util.Util;
