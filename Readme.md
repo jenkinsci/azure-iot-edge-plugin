@@ -53,23 +53,49 @@ In Jenkins, there are two types of project.
 * Pipeline project: Config through code
 
 ### Create a Freestyle project
-#### Build and Push task
+#### Build task
+
+Build task could help build Azure IoT Edge Solution into container images.
 
 ![Build](doc/build.png)
 
-1. In `Build` section, click `Add build step`, then choose `Azure IoT Edge Build and Push`. 
-2. Set `Solution Root Path`, in most cases it's where deployment.template.json located.
-3. Set `Bypass modules`, it is the list of modules to bypass when building, use comma delimited list of modules. Example "ModuleA,ModuleB". You can leave this field empty to build all modules.
-4. Choose docker registry in `Docker Credential Configuration`.
+1. In `Build` section, click `Add build step`, then choose `Azure IoT Edge Build`. 
+2. Set `Deployment Manifest File Path`, this file defines the modules and routes in Azure IoT Edge solution.
+3. Set `Default Platform`. In your *.template.json, you can leave the modules platform unspecified. For these modules, the default platform will be used.
+
+#### Push task
+
+Push task could help push Azure IoT Edge Modules into Docker Registry.
+
+![Push](doc/push.png)
+
+1. In `Build` section, click `Add build step`, then choose `Azure IoT Edge Push`. 
+2. Set `Deployment Manifest File Path`, this file defines the modules and routes in Azure IoT Edge solution.
+3. Set `Default Platform`. In your *.template.json, you can leave the modules platform unspecified. For these modules, the default platform will be used.
+4. Set `Bypass modules`, it is the list of modules to bypass when building, use comma delimited list of modules. Example "ModuleA,ModuleB". You can leave this field empty to build all modules.
+5. Choose docker registry in `Docker Credential Configuration`.
   * For Azure Container Registry, you need to use the Azure Service Principal created above to authenticate.
-  * For other types of registry(docker hub), you need to specify `Docker registry URL` and then a credential with type `Username with password`.
+  * For other types of registry (Docker Hub), you need to specify `Docker registry URL` and then a credential with type `Username with password`.
+
+#### Generate Deployment Manifest task
+
+Generate Deployment Manifest task could help generate the final Deployment File from *.template.json file.
+
+![GenConfig](doc/genconfig.png)
+
+1. In `Build` section, click `Add build step`, then choose `Azure IoT Edge Generate Deployment Manifest`. 
+2. Set `Deployment Manifest File Path`, this file defines the modules and routes in Azure IoT Edge solution.
+3. Set `Default Platform`. In your *.template.json, you can leave the modules platform unspecified. For these modules, the default platform will be used.
+4. Set `Output Deployment File Path`, this file is generated from *.template.json and used for deployment.
 
 #### Deploy task
+
+Deploy task could help deploy the Azure IoT Edge Solution to the devices.
 
 ![Deploy](doc/deploy.png)
 
 1. In `Build` section, click `Add build step`, then choose `Azure IoT Edge Deploy`. 
-2. Set `Solution Root Path`, in most cases it's where deployment.template.json located.
+2. Set `Deployment File Path`, this file is generated from *.template.json and used for deployment.
 3. Choose Azure IoT Hub.
 4. Set deployment configurations. You can click `help` button after the input box to get detailed explanation of the item.
 
@@ -80,27 +106,36 @@ You can also use this plugin in pipeline (Jenkinsfile). Here are some samples to
 #### Project config on Jenkins
 ![pipeline](doc/pipeline.png)
 
-#### Customize pipeline: Build and Push task
+#### Customize pipeline: Build task
+```groovy
+azureIoTEdgeBuild defaultPlatform: 'amd64', deploymentManifestFilePath: 'deployment.template.json'
+```
 
+#### Customize pipeline: Push task
 ##### Use Azure Container Registry
 ```groovy
-azureIoTEdgePush dockerRegistryType: 'acr', acrName: '<acr_name>', bypassModules: '', azureCredentialsId: '<azure_credential_id>', resourceGroup: '<resource_group_name>', rootPath: '<solution_root_path>'
+azureIoTEdgePush dockerRegistryType: 'acr', acrName: '<acr_name>', bypassModules: '', azureCredentialsId: '<azure_credential_id>', resourceGroup: '<resource_group_name>', defaultPlatform: 'amd64', deploymentManifestFilePath: 'deployment.template.json'
 ```
 
 ##### Use common Container Registry
 ```groovy
-azureIoTEdgePush dockerRegistryType: 'common', dockerRegistryEndpoint: [credentialsId: '<credential_id>', url: '<url>'], bypassModules: '', resourceGroup: '<resource_group_name>', rootPath: '<solution_root_path>'
+azureIoTEdgePush dockerRegistryType: 'common', dockerRegistryEndpoint: [credentialsId: '<credential_id>', url: '<url>'], bypassModules: '', resourceGroup: '<resource_group_name>', defaultPlatform: 'amd64', deploymentManifestFilePath: 'deployment.template.json'
+```
+
+#### Customize pipeline: Generate Deployment Manifest task
+```groovy
+azureIoTEdgeGenConfig defaultPlatform: 'amd64', deploymentFilePath: 'config/deployment.json', deploymentManifestFilePath: 'deployment.template.json'
 ```
 
 #### Customize pipeline: Deploy task 
 ##### For single device
 ```groovy
-azureIoTEdgeDeploy azureCredentialsId: '<azure_credential_id>', deploymentId: '<deployment_id>', deploymentType: 'single', deviceId: '<device_id>', iothubName: '<iothub_name>', priority: '<priority>', resourceGroup: '<resource_group_name>', rootPath: '<solution_root_path>', targetCondition: ''
+azureIoTEdgeDeploy azureCredentialsId: '<azure_credential_id>', deploymentId: '<deployment_id>', deploymentType: 'single', deviceId: '<device_id>', iothubName: '<iothub_name>', priority: '<priority>', resourceGroup: '<resource_group_name>', targetCondition: '', deploymentFilePath: 'config/deployment.json'
 ```
 
 ##### For multiple devices using target condition
 ```groovy
-azureIoTEdgeDeploy azureCredentialsId: '<azure_credential_id>', deploymentId: '<deployment_id>', deploymentType: 'multiple', targetCondition: '<target_condition>', iothubName: '<iothub_name>', priority: '<priority>', resourceGroup: '<resource_group_name>', rootPath: '<solution_root_path>', targetCondition: ''
+azureIoTEdgeDeploy azureCredentialsId: '<azure_credential_id>', deploymentId: '<deployment_id>', deploymentType: 'multiple', targetCondition: '<target_condition>', iothubName: '<iothub_name>', priority: '<priority>', resourceGroup: '<resource_group_name>', targetCondition: '', deploymentFilePath: 'config/deployment.json'
 ```
 
 For advanced options, you can use Jenkins Pipeline Syntax tool to generate a sample script.
