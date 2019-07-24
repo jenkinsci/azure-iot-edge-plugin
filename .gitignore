@@ -68,3 +68,5 @@ nb-configuration.xml
 
 # Java annotation processor (APT)
 .factorypath
+
+.env
