@@ -1,4 +1,4 @@
-# Azure IoT Edge Plugin
+# Azure IoT Edge Plugin is deprecated. Please try [Azure IoT Edge Dev Tool](https://github.com/Azure/iotedgedev) in your CI/CD pipeline.
 
 Azure IoT Edge Plugin makes it easy to setup a CI/CD pipeline for developing an [IoT Edge](https://docs.microsoft.com/azure/iot-edge/how-iot-edge-works) solution on Jenkins, by providing following functionalities:
 * Continuous integration(build and push docker image)
